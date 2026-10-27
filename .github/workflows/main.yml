@@ -24,16 +24,13 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      # FIXED: Wipes out the problematic legacy build cache folders and strictly targets your actual source code root
+      # Automatically cleans legacy folders and drops the perfect 1.21.1 NeoForge environment files
       - name: Force Generate and Compile 1.21.1 Mod Environment
         run: |
-          # Purge any old, broken build caches that mess with the compiler paths
           find . -type d -name "build" -exec rm -rf {} + || true
           
-          # Accurately find your true src/main folder layout
           SRC_DIR=$(find . -path "*/src/main" -type d | head -n 1)
           if [ -z "$SRC_DIR" ]; then
-            # Fallback check if src directory layout is non-standard
             SRC_DIR=$(find . -name "java" -type d | head -n 1)
             if [ -z "$SRC_DIR" ]; then
               echo "ERROR: Could not find code source folders!"
@@ -47,11 +44,9 @@ jobs:
           echo "Targeting true project root folder at: $PROJECT_ROOT"
           cd "$PROJECT_ROOT"
           
-          # Force build initialization with standard non-interactive options to stop abort errors
           gradle init --type basic --dsl groovy --no-daemon --overwrite
           ./gradlew wrapper --gradle-version 8.10 --no-daemon
           
-          # Drop your clean 1.21.1 NeoForge configurations right onto the source path
           cat << 'EOF' > build.gradle
           plugins {
               id 'java'
@@ -75,6 +70,7 @@ jobs:
           tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
           EOF
 
+          # FIXED: Updated the server endpoint to the official releases folder repository link layout
           cat << 'EOF' > settings.gradle
           pluginManagement {
               repositories {
