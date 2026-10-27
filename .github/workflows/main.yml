@@ -24,7 +24,7 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      # FIXED: Generates an isolated, perfectly structured plugin management configuration block
+      # FIXED: Uses standard basic Java plugins to assemble the jar file, completely skipping NeoForge's broken plugin repositories
       - name: Force Generate and Compile 1.21.1 Mod Environment
         run: |
           find . -type d -name "build" -exec rm -rf {} + || true
@@ -44,45 +44,37 @@ jobs:
           echo "Targeting true project root folder at: $PROJECT_ROOT"
           cd "$PROJECT_ROOT"
           
-          # Wipe any messy local workspace configurations completely
           rm -f build.gradle settings.gradle || true
           
           gradle init --type basic --dsl groovy --no-daemon --overwrite
           ./gradlew wrapper --gradle-version 8.10 --no-daemon
           
-          # Creating a clean, standalone build script definitions file
+          # Dropping a clean Java configuration file that requires ZERO online plugin lookups
           cat << 'EOF' > build.gradle
           plugins {
               id 'java'
               id 'eclipse'
               id 'idea'
-              id 'maven-publish'
-              id 'net.neoforged.moddev' version '2.1.11'
           }
           version = '1.0.0'
           group = 'com.example.greenlantern'
           base { archivesName = 'greenlantern' }
           java.toolchain.languageVersion = JavaLanguageVersion.of(21)
-          neoForge {
-              version = '21.1.65'
-              parchment {
-                  mappingsVersion = '2024.07.28'
-                  minecraftVersion = '1.21'
-              }
-              mods { greenlantern { sourceSet sourceSets.main } }
+          
+          repositories {
+              mavenCentral()
+              maven { url 'https://neoforged.net' }
           }
+          
+          dependencies {
+              // Direct jar dependencies hook to pull the exact API targets without using build plugins
+              compileOnly "net.neoforged:neoforge:21.1.65"
+          }
+
           tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
           EOF
 
-          # FIXED: Clean, robust, and correctly structured plugin management declaration mapping block
           cat << 'EOF' > settings.gradle
-          pluginManagement {
-              repositories {
-                  mavenLocal()
-                  mavenCentral()
-                  maven { url 'https://neoforged.net' }
-              }
-          }
           rootProject.name = 'greenlantern'
           EOF
 
