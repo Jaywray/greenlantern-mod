@@ -30,14 +30,11 @@ jobs:
         mv temp_extraction/*/.??* temp_extraction/*/* . 2>/dev/null || true
         rm -rf temp_extraction
 
-    - name: Fix Hardcoded Desktop Paths
+    - name: Read Build Configurations
       run: |
-        echo "Sanitizing hardcoded Windows paths from build configurations..."
-        # This scans configuration files and removes hardcoded absolute D:/ drive references
-        sed -i 's|D:/curseforge/[^'\'']*||g' build.gradle 2>/dev/null || true
-        sed -i 's|D:\\curseforge\\[^'\'']*||g' build.gradle 2>/dev/null || true
-        
-        echo "Verifying build configurations are clean..."
+        echo "=== Printing build.gradle content for analysis ==="
+        cat build.gradle
+        echo "=================================================="
 
     - name: Ensure Gradle Wrapper Exists
       run: |
