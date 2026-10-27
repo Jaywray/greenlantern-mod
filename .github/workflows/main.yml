@@ -1,0 +1,30 @@
+name: Build Minecraft Mod
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Unzip Project Files
+        run: unzip GreenLanternMod.zip -d .
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Fix Execution Permissions
+        run: chmod +x gradlew || true
+
+      - name: Compile Mod with Gradle
+        run: ./gradlew clean build --no-daemon
+
+      - name: Upload Finished Mod File
+        uses: actions/upload-artifact@v4
+        with:
+          name: Playable-Mod-Jar
+          path: build/libs/*.jar
