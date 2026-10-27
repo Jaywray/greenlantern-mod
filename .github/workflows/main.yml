@@ -5,7 +5,7 @@ on:
     branches: [ "main", "master" ]
   pull_request:
     branches: [ "main", "master" ]
-  workflow_dispatch: # Allows you to manually click "Run workflow" in GitHub
+  workflow_dispatch:
 
 jobs:
   build:
@@ -20,17 +20,22 @@ jobs:
       with:
         java-version: '21'
         distribution: 'temurin'
-        cache: 'gradle' # Automatically caches dependencies to speed up future runs
+        cache: 'gradle'
+        # REPLACE 'your-subfolder-name' with the actual folder name your mod files live in
+        cache-dependency-path: |
+          your-subfolder-name/**/*.gradle*
+          your-subfolder-name/gradle/wrapper/gradle-wrapper.properties
 
     - name: Make Gradle Wrapper Executable
-      run: chmod +x ./gradlew
+      run: chmod +x ./your-subfolder-name/gradlew
 
     - name: Execute NeoForge Cloud Compilation
       run: ./gradlew build --no-daemon
+      working-directory: your-subfolder-name
 
     - name: Archive Mod Artifacts
       uses: actions/upload-artifact@v4
       with:
         name: GreenLantern-Mod-1.21.1
-        path: build/libs/*.jar
+        path: your-subfolder-name/build/libs/*.jar
         if-no-files-found: error
