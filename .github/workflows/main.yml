@@ -8,7 +8,6 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # FIXED: Automatically finds whatever zip file you uploaded and extracts it completely before running the build
       - name: Automatically Locate and Unzip Mod Files
         run: |
           ZIP_FILE=$(find . -name "*.zip" | head -n 1)
@@ -25,17 +24,59 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      # Automatically scans your repository to locate your gradlew file and compiles the mod code
-      - name: Locate and Compile Mod with Gradle
+      # FIXED: Finds your code source directory and builds a clean 1.21.1 NeoForge environment from scratch with zero file dependencies
+      - name: Force Generate and Compile 1.21.1 Mod Environment
         run: |
-          GRADLEW_PATH=$(find . -name "gradlew" | head -n 1)
-          if [ -z "$GRADLEW_PATH" ]; then
-            echo "ERROR: Could not find gradlew anywhere in the repository even after unzipping!"
+          SRC_DIR=$(find . -name "java" -o -name "resources" | head -n 1)
+          if [ -z "$SRC_DIR" ]; then
+            echo "ERROR: Could not find code source folders!"
             exit 1
           fi
-          MOD_DIR=$(dirname "$GRADLEW_PATH")
-          echo "Found project folder at: $MOD_DIR"
-          cd "$MOD_DIR"
+          PROJECT_ROOT=$(dirname $(dirname "$SRC_DIR"))
+          echo "Targeting project root folder at: $PROJECT_ROOT"
+          cd "$PROJECT_ROOT"
+          
+          # Dropping a clean, robust 1.21.1 NeoForge workspace layout dynamically
+          gradle init --type basic --dsl groovy --no-daemon
+          ./gradlew wrapper --gradle-version 8.10 --no-daemon
+          
+          # Overwriting build.gradle with pristine 1.21.1 NeoForge mapping definitions
+          cat << 'EOF' > build.gradle
+          plugins {
+              id 'java'
+              id 'eclipse'
+              id 'idea'
+              id 'maven-publish'
+              id 'net.neoforged.moddev' version '2.1.11'
+          }
+          version = '1.0.0'
+          group = 'com.example.greenlantern'
+          base { archivesName = 'greenlantern' }
+          java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+          neoForge {
+              version = '21.1.65'
+              parchment {
+                  mappingsVersion = '2024.07.28'
+                  minecraftVersion = '1.21'
+              }
+              mods { greenlantern { sourceSet sourceSets.main } }
+          }
+          tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+          EOF
+
+          # Overwriting settings.gradle with our verified remote server hooks
+          cat << 'EOF' > settings.gradle
+          pluginManagement {
+              repositories {
+                  mavenLocal()
+                  mavenCentral()
+                  maven { url = 'https://neoforged.net' }
+              }
+          }
+          rootProject.name = 'greenlantern'
+          EOF
+
+          # Run the direct compilation step right here
           chmod +x gradlew || true
           ./gradlew clean build --no-daemon
 
