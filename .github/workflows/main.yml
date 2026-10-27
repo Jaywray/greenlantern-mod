@@ -20,13 +20,14 @@ jobs:
       with:
         java-version: '21'
         distribution: 'temurin'
-        # REMOVED the cache line completely to prevent strict crashing
 
-    - name: Debug - List Files in Repository
+    # Unzips your mod code so Gradle can find the build files
+    - name: Extract Desktop Code Files
       run: |
-        echo "=== Checking what files are actually in this repository ==="
+        echo "Extracting mod source files..."
+        unzip -q "GreenLanternMod (5).zip" -d .
+        echo "Extraction complete. Verifying extracted contents:"
         ls -la
-        echo "=========================================================="
 
     - name: Ensure Gradle Wrapper Exists
       run: |
