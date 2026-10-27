@@ -44,14 +44,14 @@ jobs:
         fi
         chmod +x ./gradlew
 
-    # FORCE-DOWNLOAD MINECRAFT DEPENDENCIES BEFORE IT TOUCHES JAVA CODE
+    # FORCE-GENERATE THE ACTIVE MINECRAFT DEVELOPMENT CLASSPATH STRUCTURE
     - name: Pre-Download Engine Libraries
       run: |
-        echo "Forcing engine repository download..."
-        ./gradlew help --no-daemon
+        echo "Forcing NeoForge workspace configuration track..."
+        ./gradlew generateModDevEssentialConfig --no-daemon 2>/dev/null || ./gradlew tasks --no-daemon
 
     - name: Execute NeoForge Cloud Compilation
-      run: ./gradlew compileJava build --no-daemon
+      run: ./gradlew build --no-daemon
 
     - name: Archive Mod Artifacts
       uses: actions/upload-artifact@v4
