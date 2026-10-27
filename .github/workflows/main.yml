@@ -20,22 +20,23 @@ jobs:
       with:
         java-version: '21'
         distribution: 'temurin'
-        cache: 'gradle'
-        # REPLACE 'your-subfolder-name' with the actual folder name your mod files live in
-        cache-dependency-path: |
-          your-subfolder-name/**/*.gradle*
-          your-subfolder-name/gradle/wrapper/gradle-wrapper.properties
+        # Disabling automatic gradle caching fixes the strict missing wrapper error
+        cache: 'maven' 
 
-    - name: Make Gradle Wrapper Executable
-      run: chmod +x ./your-subfolder-name/gradlew
+    - name: Ensure Gradle Wrapper Exists
+      run: |
+        if [ ! -f ./gradlew ]; then
+          echo "Gradle wrapper missing. Generating default wrapper..."
+          gradle wrapper --gradle-version 8.7
+        fi
+        chmod +x ./gradlew
 
     - name: Execute NeoForge Cloud Compilation
       run: ./gradlew build --no-daemon
-      working-directory: your-subfolder-name
 
     - name: Archive Mod Artifacts
       uses: actions/upload-artifact@v4
       with:
         name: GreenLantern-Mod-1.21.1
-        path: your-subfolder-name/build/libs/*.jar
+        path: build/libs/*.jar
         if-no-files-found: error
