@@ -24,7 +24,7 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      # FIXED: Uses standard echo lines to write the NeoForge configuration files to ensure GitHub saves the edits completely
+      # FIXED: Vaporizes any hidden or old gradle files inside your subfolders before creating the fresh 1.21.1 setup
       - name: Force Generate and Compile 1.21.1 Mod Environment
         run: |
           find . -type d -name "build" -exec rm -rf {} + || true
@@ -44,10 +44,13 @@ jobs:
           echo "Targeting true project root folder at: $PROJECT_ROOT"
           cd "$PROJECT_ROOT"
           
+          # CRITICAL CLEANUP: Purges any old build/settings configurations that came out of the desktop zip folder
+          rm -f build.gradle settings.gradle || true
+          
           gradle init --type basic --dsl groovy --no-daemon --overwrite
           ./gradlew wrapper --gradle-version 8.10 --no-daemon
           
-          # Writing build.gradle cleanly via standard echo commands
+          # Dropping fresh, clean configuration files onto the completely cleared directory track
           echo "plugins { id 'java'; id 'eclipse'; id 'idea'; id 'maven-publish'; id 'net.neoforged.moddev' version '2.1.11' }" > build.gradle
           echo "version = '1.0.0'" >> build.gradle
           echo "group = 'com.example.greenlantern'" >> build.gradle
@@ -56,7 +59,6 @@ jobs:
           echo "neoForge { version = '21.1.65'; parchment { mappingsVersion = '2024.07.28'; minecraftVersion = '1.21' }; mods { greenlantern { sourceSet sourceSets.main } } }" >> build.gradle
           echo "tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }" >> build.gradle
 
-          # Writing settings.gradle with the verified, exact release repo URL block
           echo "pluginManagement { repositories { mavenLocal(); mavenCentral(); maven { url = 'https://neoforged.net' } } }" > settings.gradle
           echo "rootProject.name = 'greenlantern'" >> settings.gradle
 
