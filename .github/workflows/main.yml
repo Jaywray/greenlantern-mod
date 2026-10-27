@@ -21,12 +21,17 @@ jobs:
         java-version: '21'
         distribution: 'temurin'
 
-    # Unzips your mod code so Gradle can find the build files
     - name: Extract Desktop Code Files
       run: |
         echo "Extracting mod source files..."
-        unzip -q "GreenLanternMod (5).zip" -d .
-        echo "Extraction complete. Verifying extracted contents:"
+        unzip -q "GreenLanternMod (5).zip" -d temp_extraction
+        
+        echo "Moving files out of the nested archive folder to root level..."
+        # This safely grabs everything out of the subfolder and pulls it to the root
+        mv temp_extraction/*/.??* temp_extraction/*/* . 2>/dev/null || true
+        rm -rf temp_extraction
+        
+        echo "Extraction and flattening complete. Verifying root level contents:"
         ls -la
 
     - name: Ensure Gradle Wrapper Exists
