@@ -33,13 +33,8 @@ jobs:
     - name: Purge Hardcoded Local Dependencies
       run: |
         echo "Locating and wiping any hardcoded local path declarations..."
-        # Deletes any lines referencing your local computer files entirely
         sed -i '/curseforge/d' build.gradle 2>/dev/null || true
         sed -i '/D:/d' build.gradle 2>/dev/null || true
-        
-        echo "=== Verifying cleaned build.gradle dependencies ==="
-        cat build.gradle | grep -A 15 "dependencies" || cat build.gradle
-        echo "=================================================="
 
     - name: Ensure Gradle Wrapper Exists
       run: |
@@ -48,6 +43,10 @@ jobs:
           gradle wrapper --gradle-version 8.7
         fi
         chmod +x ./gradlew
+
+    # CRITICAL NEW STEP: Pulls down Minecraft, NeoForge, and maps them to your environment
+    - name: Initialize NeoForge Engine Workspace
+      run: ./gradlew jar --no-daemon
 
     - name: Execute NeoForge Cloud Compilation
       run: ./gradlew build --no-daemon
