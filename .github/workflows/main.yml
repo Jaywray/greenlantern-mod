@@ -44,14 +44,14 @@ jobs:
         fi
         chmod +x ./gradlew
 
-    # FORCE GRADLE TO FETCH ALL MISSING ENDPOINTS AND INTERNET DEPENDENCIES FIRST
-    - name: Resolve Engine Dependencies
+    # FORCE-DOWNLOAD MINECRAFT DEPENDENCIES BEFORE IT TOUCHES JAVA CODE
+    - name: Pre-Download Engine Libraries
       run: |
         echo "Forcing engine repository download..."
-        ./gradlew dependencies --no-daemon
+        ./gradlew help --no-daemon
 
     - name: Execute NeoForge Cloud Compilation
-      run: ./gradlew build --no-daemon
+      run: ./gradlew compileJava build --no-daemon
 
     - name: Archive Mod Artifacts
       uses: actions/upload-artifact@v4
