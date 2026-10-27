@@ -36,6 +36,19 @@ jobs:
         sed -i '/curseforge/d' build.gradle 2>/dev/null || true
         sed -i '/D:/d' build.gradle 2>/dev/null || true
 
+    # FORCE INJECT REPOSITORIES AND ENDPOINTS FOR MINECRAFT AND NEOFORGE
+    - name: Inject NeoForge Engine Architecture
+      run: |
+        echo "Injecting official NeoForge and Mojang maven servers..."
+        sed -i '/repositories {/a \    maven { url = "https://neoforged.net" }\n    maven { url = "https://minecraft.net" }' build.gradle
+        
+        echo "Injecting NeoForge 1.21.1 Core API compilation libraries..."
+        sed -i '/dependencies {/a \    implementation "net.neoforged:neoforge:21.1.65"\n    compileOnly "org.joml:joml:1.10.5"' build.gradle
+        
+        echo "=== Verifying Injected build.gradle Structure ==="
+        cat build.gradle
+        echo "================================================"
+
     - name: Ensure Gradle Wrapper Exists
       run: |
         if [ ! -f ./gradlew ]; then
@@ -43,12 +56,6 @@ jobs:
           gradle wrapper --gradle-version 8.7
         fi
         chmod +x ./gradlew
-
-    # FORCE-GENERATE THE ACTIVE MINECRAFT DEVELOPMENT CLASSPATH STRUCTURE
-    - name: Pre-Download Engine Libraries
-      run: |
-        echo "Forcing NeoForge workspace configuration track..."
-        ./gradlew generateModDevEssentialConfig --no-daemon 2>/dev/null || ./gradlew tasks --no-daemon
 
     - name: Execute NeoForge Cloud Compilation
       run: ./gradlew build --no-daemon
