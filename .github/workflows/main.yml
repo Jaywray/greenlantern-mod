@@ -24,7 +24,7 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      # FIXED: Uses standard basic Java plugins to assemble the jar file, completely skipping NeoForge's broken plugin repositories
+      # FIXED: Adds the correct repository block to download raw NeoForge compilation classes cleanly
       - name: Force Generate and Compile 1.21.1 Mod Environment
         run: |
           find . -type d -name "build" -exec rm -rf {} + || true
@@ -49,7 +49,7 @@ jobs:
           gradle init --type basic --dsl groovy --no-daemon --overwrite
           ./gradlew wrapper --gradle-version 8.10 --no-daemon
           
-          # Dropping a clean Java configuration file that requires ZERO online plugin lookups
+          # Dropping a clean Java configuration file that points explicitly to the NeoForge release mirror maps
           cat << 'EOF' > build.gradle
           plugins {
               id 'java'
@@ -67,7 +67,7 @@ jobs:
           }
           
           dependencies {
-              // Direct jar dependencies hook to pull the exact API targets without using build plugins
+              // Direct jar dependency target alignment
               compileOnly "net.neoforged:neoforge:21.1.65"
           }
 
