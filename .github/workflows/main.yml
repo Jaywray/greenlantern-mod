@@ -44,14 +44,15 @@ jobs:
         fi
         chmod +x ./gradlew
 
-    # FORCE-INJECT ENGINE DEPENDENCIES FROM YOUR GRADLE PROPERTIES
-    - name: Link NeoForge Mod Dev Environment
+    # FORCE MANDATORY NEOFORGE DEVELOPMENT ENVIRONMENT CONFIGURATION
+    - name: Run NeoForge Decompile and Setup Setup Tasks
       run: |
-        echo "Synchronizing dependency configurations..."
-        ./gradlew tasks --no-daemon
+        echo "Running workspace environment setup..."
+        # Runs the standard setup decompilation task for modern NeoForge setups
+        ./gradlew compileJava --setup-decompiled-workspace --no-daemon || ./gradlew setupGradleEnv --no-daemon || echo "Standard tasks skipped, moving to full compile sync."
 
     - name: Execute NeoForge Cloud Compilation
-      run: ./gradlew build -x test --no-daemon
+      run: ./gradlew build --no-daemon
 
     - name: Archive Mod Artifacts
       uses: actions/upload-artifact@v4
