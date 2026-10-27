@@ -9,28 +9,24 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Java 21
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
 
-      # FIXED: Tells the runner to jump straight into your GreenLanternMod folder to find the build configuration tools
-      - name: Fix Execution Permissions
+      # FIXED: Automatically scans your entire repository to locate your gradlew file, completely bypassing any folder spelling mistakes
+      - name: Locate and Compile Mod with Gradle
         run: |
-          if [ -d "GreenLanternMod" ]; then
-            cd GreenLanternMod && chmod +x gradlew || true
-          else
-            chmod +x gradlew || true
+          GRADLEW_PATH=$(find . -name "gradlew" | head -n 1)
+          if [ -z "$GRADLEW_PATH" ]; then
+            echo "ERROR: Could not find gradlew anywhere in the repository!"
+            exit 1
           fi
-
-      # FIXED: Steps into the custom folder automatically to compile your mod files cleanly
-      - name: Compile Mod with Gradle
-        run: |
-          if [ -d "GreenLanternMod" ]; then
-            cd GreenLanternMod && ./gradlew clean build --no-daemon
-          else
-            ./gradlew clean build --no-daemon
-          fi
+          MOD_DIR=$(dirname "$GRADLEW_PATH")
+          echo "Found project folder at: $MOD_DIR"
+          cd "$MOD_DIR"
+          chmod +x gradlew || true
+          ./gradlew clean build --no-daemon
 
       - name: Upload Finished Mod File
         uses: actions/upload-artifact@v4
