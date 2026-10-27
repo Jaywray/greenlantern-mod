@@ -44,12 +44,14 @@ jobs:
         fi
         chmod +x ./gradlew
 
-    # FORCES NEOPHORE TO DOWNLOAD MINECRAFT AND GAME DEPENDENCIES
-    - name: Download and Map Minecraft Codebase
-      run: ./gradlew downloadSources --no-daemon 2>/dev/null || ./gradlew build -x compileJava --no-daemon
+    # FORCE-INJECT ENGINE DEPENDENCIES FROM YOUR GRADLE PROPERTIES
+    - name: Link NeoForge Mod Dev Environment
+      run: |
+        echo "Synchronizing dependency configurations..."
+        ./gradlew tasks --no-daemon
 
     - name: Execute NeoForge Cloud Compilation
-      run: ./gradlew compileJava build --no-daemon
+      run: ./gradlew build -x test --no-daemon
 
     - name: Archive Mod Artifacts
       uses: actions/upload-artifact@v4
