@@ -8,15 +8,8 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Automatically Locate and Unzip Mod Files
-        run: |
-          ZIP_FILE=$(find . -name "*.zip" | head -n 1)
-          if [ -z "$ZIP_FILE" ]; then
-            echo "No zip file found, assuming repository contains raw files directly."
-          else
-            echo "Found zip archive at: $ZIP_FILE"
-            unzip -o "$ZIP_FILE" -d .
-          fi
+      - name: Unzip Project Files
+        run: unzip GreenLanternMod.zip -d .
 
       - name: Set up Java 21
         uses: actions/setup-java@v4
@@ -24,50 +17,14 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      # FIXED: Vaporizes any hidden or old gradle files inside your subfolders before creating the fresh 1.21.1 setup
-      - name: Force Generate and Compile 1.21.1 Mod Environment
-        run: |
-          find . -type d -name "build" -exec rm -rf {} + || true
-          
-          SRC_DIR=$(find . -path "*/src/main" -type d | head -n 1)
-          if [ -z "$SRC_DIR" ]; then
-            SRC_DIR=$(find . -name "java" -type d | head -n 1)
-            if [ -z "$SRC_DIR" ]; then
-              echo "ERROR: Could not find code source folders!"
-              exit 1
-            fi
-            PROJECT_ROOT=$(dirname "$SRC_DIR")
-          else
-            PROJECT_ROOT=$(dirname $(dirname "$SRC_DIR"))
-          fi
-          
-          echo "Targeting true project root folder at: $PROJECT_ROOT"
-          cd "$PROJECT_ROOT"
-          
-          # CRITICAL CLEANUP: Purges any old build/settings configurations that came out of the desktop zip folder
-          rm -f build.gradle settings.gradle || true
-          
-          gradle init --type basic --dsl groovy --no-daemon --overwrite
-          ./gradlew wrapper --gradle-version 8.10 --no-daemon
-          
-          # Dropping fresh, clean configuration files onto the completely cleared directory track
-          echo "plugins { id 'java'; id 'eclipse'; id 'idea'; id 'maven-publish'; id 'net.neoforged.moddev' version '2.1.11' }" > build.gradle
-          echo "version = '1.0.0'" >> build.gradle
-          echo "group = 'com.example.greenlantern'" >> build.gradle
-          echo "base { archivesName = 'greenlantern' }" >> build.gradle
-          echo "java.toolchain.languageVersion = JavaLanguageVersion.of(21)" >> build.gradle
-          echo "neoForge { version = '21.1.65'; parchment { mappingsVersion = '2024.07.28'; minecraftVersion = '1.21' }; mods { greenlantern { sourceSet sourceSets.main } } }" >> build.gradle
-          echo "tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }" >> build.gradle
+      - name: Fix Execution Permissions
+        run: chmod +x gradlew || true
 
-          echo "pluginManagement { repositories { mavenLocal(); mavenCentral(); maven { url = 'https://neoforged.net' } } }" > settings.gradle
-          echo "rootProject.name = 'greenlantern'" >> settings.gradle
-
-          # Compile your mod natively right inside its true home directory
-          chmod +x gradlew || true
-          ./gradlew clean build --no-daemon
+      - name: Compile Mod with Gradle
+        run: ./gradlew clean build --no-daemon
 
       - name: Upload Finished Mod File
         uses: actions/upload-artifact@v4
         with:
           name: Playable-Mod-Jar
-          path: "**/build/libs/*.jar"
+          path: build/libs/*.jar
