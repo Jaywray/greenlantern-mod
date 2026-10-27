@@ -44,12 +44,11 @@ jobs:
         fi
         chmod +x ./gradlew
 
-    # FORCE MANDATORY NEOFORGE DEVELOPMENT ENVIRONMENT CONFIGURATION
-    - name: Run NeoForge Decompile and Setup Setup Tasks
+    # FORCE GRADLE TO FETCH ALL MISSING ENDPOINTS AND INTERNET DEPENDENCIES FIRST
+    - name: Resolve Engine Dependencies
       run: |
-        echo "Running workspace environment setup..."
-        # Runs the standard setup decompilation task for modern NeoForge setups
-        ./gradlew compileJava --setup-decompiled-workspace --no-daemon || ./gradlew setupGradleEnv --no-daemon || echo "Standard tasks skipped, moving to full compile sync."
+        echo "Forcing engine repository download..."
+        ./gradlew dependencies --no-daemon
 
     - name: Execute NeoForge Cloud Compilation
       run: ./gradlew build --no-daemon
