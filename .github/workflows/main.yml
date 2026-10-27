@@ -44,12 +44,12 @@ jobs:
         fi
         chmod +x ./gradlew
 
-    # CRITICAL NEW STEP: Pulls down Minecraft, NeoForge, and maps them to your environment
-    - name: Initialize NeoForge Engine Workspace
-      run: ./gradlew jar --no-daemon
+    # FORCES NEOPHORE TO DOWNLOAD MINECRAFT AND GAME DEPENDENCIES
+    - name: Download and Map Minecraft Codebase
+      run: ./gradlew downloadSources --no-daemon 2>/dev/null || ./gradlew build -x compileJava --no-daemon
 
     - name: Execute NeoForge Cloud Compilation
-      run: ./gradlew build --no-daemon
+      run: ./gradlew compileJava build --no-daemon
 
     - name: Archive Mod Artifacts
       uses: actions/upload-artifact@v4
