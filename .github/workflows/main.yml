@@ -41,6 +41,19 @@ jobs:
         echo "Injecting the official NeoForge development plugin..."
         sed -i 's/id '\''java'\''/id '\''net.neoforged.moddev'\'' version '\''1.0.17'\''/' build.gradle
         
+        echo "Injecting required neoForm configuration blocks..."
+        # This appends the exact 1.21.1 environment layout expected by ModDevGradle
+        cat << 'EOF' >> build.gradle
+
+        neoForge {
+            version = "21.1.65"
+            parchment {
+                mappingsVersion = "2024.07.28"
+                minecraftVersion = "1.21"
+            }
+        }
+        EOF
+        
         echo "=== Verifying Your Cleaned Build Architecture ==="
         cat build.gradle
         echo "================================================="
@@ -49,7 +62,6 @@ jobs:
       run: |
         if [ ! -f ./gradlew ]; then
           echo "Gradle wrapper missing or outdated. Generating Gradle 8.8..."
-          # UPGRADED to version 8.8 to satisfy the plugin requirement explicitly
           gradle wrapper --gradle-version 8.8
         fi
         chmod +x ./gradlew
