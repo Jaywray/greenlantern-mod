@@ -8,18 +8,29 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      # FIXED: Automatically finds whatever zip file you uploaded and extracts it completely before running the build
+      - name: Automatically Locate and Unzip Mod Files
+        run: |
+          ZIP_FILE=$(find . -name "*.zip" | head -n 1)
+          if [ -z "$ZIP_FILE" ]; then
+            echo "No zip file found, assuming repository contains raw files directly."
+          else
+            echo "Found zip archive at: $ZIP_FILE"
+            unzip -o "$ZIP_FILE" -d .
+          fi
+
       - name: Set up Java 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
 
-      # FIXED: Automatically scans your entire repository to locate your gradlew file, completely bypassing any folder spelling mistakes
+      # Automatically scans your repository to locate your gradlew file and compiles the mod code
       - name: Locate and Compile Mod with Gradle
         run: |
           GRADLEW_PATH=$(find . -name "gradlew" | head -n 1)
           if [ -z "$GRADLEW_PATH" ]; then
-            echo "ERROR: Could not find gradlew anywhere in the repository!"
+            echo "ERROR: Could not find gradlew anywhere in the repository even after unzipping!"
             exit 1
           fi
           MOD_DIR=$(dirname "$GRADLEW_PATH")
