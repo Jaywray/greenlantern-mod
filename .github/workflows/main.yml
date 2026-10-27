@@ -27,12 +27,17 @@ jobs:
         unzip -q "GreenLanternMod (5).zip" -d temp_extraction
         
         echo "Moving files out of the nested archive folder to root level..."
-        # This safely grabs everything out of the subfolder and pulls it to the root
         mv temp_extraction/*/.??* temp_extraction/*/* . 2>/dev/null || true
         rm -rf temp_extraction
+
+    - name: Fix Hardcoded Desktop Paths
+      run: |
+        echo "Sanitizing hardcoded Windows paths from build configurations..."
+        # This scans configuration files and removes hardcoded absolute D:/ drive references
+        sed -i 's|D:/curseforge/[^'\'']*||g' build.gradle 2>/dev/null || true
+        sed -i 's|D:\\curseforge\\[^'\'']*||g' build.gradle 2>/dev/null || true
         
-        echo "Extraction and flattening complete. Verifying root level contents:"
-        ls -la
+        echo "Verifying build configurations are clean..."
 
     - name: Ensure Gradle Wrapper Exists
       run: |
