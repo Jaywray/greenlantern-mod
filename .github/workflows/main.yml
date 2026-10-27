@@ -8,21 +8,32 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # FIXED: Removed the unzip task completely so the cloud machine reads your uploaded files directly
       - name: Set up Java 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '21'
 
+      # FIXED: Tells the runner to jump straight into your GreenLanternMod folder to find the build configuration tools
       - name: Fix Execution Permissions
-        run: chmod +x gradlew || true
+        run: |
+          if [ -d "GreenLanternMod" ]; then
+            cd GreenLanternMod && chmod +x gradlew || true
+          else
+            chmod +x gradlew || true
+          fi
 
+      # FIXED: Steps into the custom folder automatically to compile your mod files cleanly
       - name: Compile Mod with Gradle
-        run: ./gradlew clean build --no-daemon
+        run: |
+          if [ -d "GreenLanternMod" ]; then
+            cd GreenLanternMod && ./gradlew clean build --no-daemon
+          else
+            ./gradlew clean build --no-daemon
+          fi
 
       - name: Upload Finished Mod File
         uses: actions/upload-artifact@v4
         with:
           name: Playable-Mod-Jar
-          path: build/libs/*.jar
+          path: "**/build/libs/*.jar"
