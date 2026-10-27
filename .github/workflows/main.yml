@@ -20,8 +20,13 @@ jobs:
       with:
         java-version: '21'
         distribution: 'temurin'
-        # Disabling automatic gradle caching fixes the strict missing wrapper error
-        cache: 'maven' 
+        # REMOVED the cache line completely to prevent strict crashing
+
+    - name: Debug - List Files in Repository
+      run: |
+        echo "=== Checking what files are actually in this repository ==="
+        ls -la
+        echo "=========================================================="
 
     - name: Ensure Gradle Wrapper Exists
       run: |
@@ -38,5 +43,5 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: GreenLantern-Mod-1.21.1
-        path: build/libs/*.jar
+        path: "**/build/libs/*.jar"
         if-no-files-found: error
