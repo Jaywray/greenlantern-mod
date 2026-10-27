@@ -24,7 +24,7 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      # Automatically cleans legacy folders and drops the perfect 1.21.1 Java compiler layout
+      # Automatically cleans legacy folders and builds the official NeoForge 1.21.1 compilation workspace from scratch
       - name: Force Generate and Compile 1.21.1 Mod Environment
         run: |
           find . -type d -name "build" -exec rm -rf {} + || true
@@ -44,45 +44,43 @@ jobs:
           echo "Targeting true project root folder at: $PROJECT_ROOT"
           cd "$PROJECT_ROOT"
           
+          # Force build initialization with standard non-interactive options
           gradle init --type basic --dsl groovy --no-daemon --overwrite
           ./gradlew wrapper --gradle-version 8.10 --no-daemon
           
-          # FIXED: Natively downloads the complete, full-size official Minecraft 1.21.1 library file straight into your project folder via curl
-          curl -o minecraft-1.21.1.jar https://mojang.com
-
-          # Overwriting build.gradle to read our freshly downloaded local game file directly
+          # Overwriting build.gradle with the officially supported NeoForge ModDev mapping definitions
           cat << 'EOF' > build.gradle
           plugins {
               id 'java'
               id 'eclipse'
               id 'idea'
               id 'maven-publish'
+              id 'net.neoforged.moddev' version '2.1.11'
           }
           version = '1.0.0'
           group = 'com.example.greenlantern'
           base { archivesName = 'greenlantern' }
-          java { toolchain { languageVersion = JavaLanguageVersion.of(21) } }
-          
-          repositories {
-              mavenLocal()
-              mavenCentral()
-          }
-          
-          dependencies {
-              // Links the compilation directly to our pristine downloaded local file
-              compileOnly files('minecraft-1.21.1.jar')
-          }
-
-          // Automatically fixes the model texture tags seamlessly during assembly
-          tasks.withType(ProcessResources).configureEach {
-              filesMatching("assets/greenlantern/models/**/*.json") {
-                  filter { line -> line.replace('forge_data', 'neoforge_data') }
+          java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+          neoForge {
+              version = '21.1.65'
+              parchment {
+                  mappingsVersion = '2024.07.28'
+                  minecraftVersion = '1.21'
               }
+              mods { greenlantern { sourceSet sourceSets.main } }
           }
           tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
           EOF
 
+          # FIXED: Fixed the server repository syntax block to let the cloud computer pull the missing NeoForge library jars seamlessly
           cat << 'EOF' > settings.gradle
+          pluginManagement {
+              repositories {
+                  mavenLocal()
+                  mavenCentral()
+                  maven { url = 'https://neoforged.net' }
+              }
+          }
           rootProject.name = 'greenlantern'
           EOF
 
