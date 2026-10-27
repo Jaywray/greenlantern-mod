@@ -36,14 +36,15 @@ jobs:
         sed -i '/curseforge/d' build.gradle 2>/dev/null || true
         sed -i '/D:/d' build.gradle 2>/dev/null || true
 
-    # FORCE INJECT REPOSITORIES AND ENDPOINTS FOR MINECRAFT AND NEOFORGE
+    # UPDATED CONFIGURATION: Injects correct version string formatting and missing mapping links
     - name: Inject NeoForge Engine Architecture
       run: |
         echo "Injecting official NeoForge and Mojang maven servers..."
-        sed -i '/repositories {/a \    maven { url = "https://neoforged.net" }\n    maven { url = "https://minecraft.net" }' build.gradle
+        sed -i '/repositories {/a \    maven { url = "https://maven.neoforged.net/releases" }\n    maven { url = "https://minecraft.net" }' build.gradle
         
         echo "Injecting NeoForge 1.21.1 Core API compilation libraries..."
-        sed -i '/dependencies {/a \    implementation "net.neoforged:neoforge:21.1.65"\n    compileOnly "org.joml:joml:1.10.5"' build.gradle
+        # Appending the strict release tracking syntax ensures Maven handles the endpoint resolution cleanly
+        sed -i '/dependencies {/a \    implementation "net.neoforged:neoforge:21.1.65-beta"\n    compileOnly "org.joml:joml:1.10.5"' build.gradle
         
         echo "=== Verifying Injected build.gradle Structure ==="
         cat build.gradle
