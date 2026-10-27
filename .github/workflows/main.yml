@@ -8,9 +8,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Unzip Project Files
-        run: unzip GreenLanternMod.zip -d .
-
+      # FIXED: Removed the unzip task completely so the cloud machine reads your uploaded files directly
       - name: Set up Java 21
         uses: actions/setup-java@v4
         with:
