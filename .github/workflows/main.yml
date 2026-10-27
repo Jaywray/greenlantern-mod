@@ -24,23 +24,34 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      # FIXED: Finds your code source directory and builds a clean 1.21.1 NeoForge environment from scratch with zero file dependencies
+      # FIXED: Wipes out the problematic legacy build cache folders and strictly targets your actual source code root
       - name: Force Generate and Compile 1.21.1 Mod Environment
         run: |
-          SRC_DIR=$(find . -name "java" -o -name "resources" | head -n 1)
+          # Purge any old, broken build caches that mess with the compiler paths
+          find . -type d -name "build" -exec rm -rf {} + || true
+          
+          # Accurately find your true src/main folder layout
+          SRC_DIR=$(find . -path "*/src/main" -type d | head -n 1)
           if [ -z "$SRC_DIR" ]; then
-            echo "ERROR: Could not find code source folders!"
-            exit 1
+            # Fallback check if src directory layout is non-standard
+            SRC_DIR=$(find . -name "java" -type d | head -n 1)
+            if [ -z "$SRC_DIR" ]; then
+              echo "ERROR: Could not find code source folders!"
+              exit 1
+            fi
+            PROJECT_ROOT=$(dirname "$SRC_DIR")
+          else
+            PROJECT_ROOT=$(dirname $(dirname "$SRC_DIR"))
           fi
-          PROJECT_ROOT=$(dirname $(dirname "$SRC_DIR"))
-          echo "Targeting project root folder at: $PROJECT_ROOT"
+          
+          echo "Targeting true project root folder at: $PROJECT_ROOT"
           cd "$PROJECT_ROOT"
           
-          # Dropping a clean, robust 1.21.1 NeoForge workspace layout dynamically
-          gradle init --type basic --dsl groovy --no-daemon
+          # Force build initialization with standard non-interactive options to stop abort errors
+          gradle init --type basic --dsl groovy --no-daemon --overwrite
           ./gradlew wrapper --gradle-version 8.10 --no-daemon
           
-          # Overwriting build.gradle with pristine 1.21.1 NeoForge mapping definitions
+          # Drop your clean 1.21.1 NeoForge configurations right onto the source path
           cat << 'EOF' > build.gradle
           plugins {
               id 'java'
@@ -64,7 +75,6 @@ jobs:
           tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
           EOF
 
-          # Overwriting settings.gradle with our verified remote server hooks
           cat << 'EOF' > settings.gradle
           pluginManagement {
               repositories {
@@ -76,7 +86,7 @@ jobs:
           rootProject.name = 'greenlantern'
           EOF
 
-          # Run the direct compilation step right here
+          # Compile your mod natively right inside its true home directory
           chmod +x gradlew || true
           ./gradlew clean build --no-daemon
 
