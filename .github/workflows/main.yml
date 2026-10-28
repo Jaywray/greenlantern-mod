@@ -39,7 +39,8 @@ jobs:
         cat << 'EOF' >> "$TARGET_DIR/build.gradle"
 
         neoForge {
-            version = "21.1.65"
+            # UPGRADED TO MATCH YOUR EXACT CLIENT RUNTIME VERSION PERFECTLY
+            version = "21.1.265"
             parchment {
                 mappingsVersion = "2024.07.28"
                 minecraftVersion = "1.21"
@@ -50,11 +51,8 @@ jobs:
     - name: Deep Clean Corrupted Data Mappings
       run: |
         echo "Scanning for broken dynamic tag files inside registries..."
-        # This forcefully strips broken custom damage types or empty worldgen arrays that cause RegistryDataLoader loops
         find "${{ env.PROJECT_DIR }}" -type f -name "*.json" -path "*/data/*/damage_type/*" -delete 2>/dev/null || true
         find "${{ env.PROJECT_DIR }}" -type f -name "*.json" -path "*/data/*/worldgen/*" -delete 2>/dev/null || true
-        
-        # Safe structural repair for tag files
         find "${{ env.PROJECT_DIR }}" -type f -name "*.json" -path "*/data/*" -exec sed -i 's/"values":\s*\[\s*\]/"values": \["minecraft:air"\]/g' {} + 2>/dev/null || true
 
     - name: Ensure Gradle Wrapper Exists
