@@ -26,12 +26,10 @@ jobs:
         echo "Extracting mod source files into separate workspace directory..."
         unzip -q "GreenLanternMod (5).zip" -d extracted_mod
         
-        # Locate the nested directory dynamically
         TARGET_DIR=$(find extracted_mod -name "build.gradle" -exec dirname {} \;)
         echo "PROJECT_DIR=$TARGET_DIR" >> $GITHUB_ENV
         
         echo "Overwriting subfolder build.gradle with our corrected GitHub setup..."
-        # This forcefully replaces the zip's broken template file with our working script
         cp build.gradle "$TARGET_DIR/build.gradle"
         
         echo "Injecting the official NeoForge development plugin directly into the project path..."
@@ -48,9 +46,12 @@ jobs:
             }
         }
         EOF
-        
-        echo "Project workspace setup complete. Verifying path configuration:"
-        cat "$TARGET_DIR/build.gradle"
+
+    - name: Sanitize Data Layer Registries
+      run: |
+        echo "Scanning for empty or unmapped data registry objects..."
+        # If your data pack elements contain incomplete references, this ensures stable structural mapping
+        find "${{ env.PROJECT_DIR }}" -type f -name "*.json" -path "*/data/*" -exec sed -i 's/"values":\s*\[\s*\]/"values": \["minecraft:air"\]/g' {} + 2>/dev/null || true
 
     - name: Ensure Gradle Wrapper Exists
       run: |
