@@ -35,7 +35,12 @@ jobs:
         echo "Downloading the official mapped Minecraft development jar from the secure servers..."
         curl -sL "https://neoforged.net" -o "D:/curseforge/minecraft/Install/libraries/net/minecraft/client/1.21.1-20240808.144430/client-1.21.1-20240808.144430-srg.jar"
         
-        echo "Project workspace extraction complete. Code remains perfectly untouched."
+        echo "Injecting missing player class imports into ability files..."
+        # Finds your ability files and safely adds the required vanilla Player import line right after the package header
+        find "$TARGET_DIR" -type f -name "*.java" -exec sed -i '/package com.example/a import net.minecraft.world.entity.player.Player;' {} \;
+        find "$TARGET_DIR" -type f -name "*.java" -exec sed -i '/package com.example/a import net.minecraft.server.level.ServerPlayer;' {} \;
+        
+        echo "Project workspace extraction and import patching complete."
 
     - name: Execute NeoForge Cloud Compilation
       run: |
