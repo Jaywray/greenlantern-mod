@@ -43,6 +43,7 @@ jobs:
             "import net.minecraft.world.entity.EntityType;",
             "import net.minecraft.world.entity.projectile.Projectile;",
             "import net.minecraft.world.entity.PathfinderMob;",
+            "import net.minecraft.world.item.ItemStack;",
             "import net.minecraft.tags.TagKey;",
             "import net.minecraft.resources.ResourceLocation;",
             "import net.minecraft.core.registries.Registries;",
@@ -53,6 +54,7 @@ jobs:
             "import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;",
             "import net.neoforged.neoforge.event.entity.EntityTeleportEvent;",
             "import net.neoforged.neoforge.event.server.ServerStoppingEvent;",
+            "import net.neoforged.neoforge.event.server.ServerStoppedEvent;",
             "import net.neoforged.bus.api.IEventBus;"
         ]
         
@@ -65,9 +67,9 @@ jobs:
                     file_path = os.path.join(root, file)
                     
                     with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                        lines = f.readlines()
+                        content = f.read()
                     
-                    # Clean out formatting artifacts
+                    lines = content.splitlines()
                     cleaned_lines = [line.strip('\r\n') for line in lines]
                     
                     new_lines = []
@@ -75,9 +77,8 @@ jobs:
                     
                     for line in cleaned_lines:
                         new_lines.append(line)
-                        # Find the package line safely and append imports cleanly below it
                         if line.strip().startswith("package ") and not inserted:
-                            new_lines.append("") # Empty spacer line
+                            new_lines.append("")
                             for imp in imports_to_add:
                                 new_lines.append(imp)
                             inserted = True
@@ -85,7 +86,7 @@ jobs:
                     with open(file_path, 'w', encoding='utf-8') as f:
                         f.write("\n".join(new_lines) + "\n")
                         
-        print("Global Python import mapping successful and clean.")
+        print("Global Python import mapping successful.")
 
     - name: Execute NeoForge Cloud Compilation
       run: |
