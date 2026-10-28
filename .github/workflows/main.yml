@@ -30,10 +30,10 @@ jobs:
         TARGET_DIR=$(find extracted_mod -name "src" -exec dirname {} \; | head -n 1)
         echo "PROJECT_DIR=$TARGET_DIR" >> $GITHUB_ENV
         
-        echo "Overwriting every folder level with our working setup to bypass subfolder nesting loops..."
-        # This scans ALL folder layers and copies our clean gradle files to every single step
-        find extracted_mod -type d -exec cp build.gradle {}/build.gradle 2>/dev/null \;
-        find extracted_mod -type d -exec cp settings.gradle {}/settings.gradle 2>/dev/null \;
+        echo "Overwriting subfolder environment blueprints with our corrected GitHub setup..."
+        # This forcefully copies BOTH working gradle configs directly into your code root folder path seamlessly
+        cp build.gradle "$TARGET_DIR/build.gradle"
+        cp settings.gradle "$TARGET_DIR/settings.gradle"
         
         echo "Project workspace setup complete. Verifying layout path configuration:"
         ls -la "$TARGET_DIR"
@@ -41,10 +41,8 @@ jobs:
     - name: Ensure Gradle Wrapper Exists
       run: |
         cd "${{ env.PROJECT_DIR }}"
-        if [ ! -f ./gradlew ]; then
-          echo "Generating Gradle 8.8 Wrapper inside the project folder..."
-          gradle wrapper --gradle-version 8.8
-        fi
+        # Forcing wrapper generation specifically inside the deep target folder
+        gradle wrapper --gradle-version 8.8
         chmod +x ./gradlew
 
     - name: Execute NeoForge Cloud Compilation
