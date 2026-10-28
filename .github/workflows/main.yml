@@ -21,21 +21,36 @@ jobs:
         java-version: '21'
         distribution: 'temurin'
 
-    - name: Extract Desktop Code Files
+    - name: Extract and Configure Desktop Code Workspace
       run: |
         echo "Extracting mod source files into separate workspace directory..."
-        # Extract files into a dedicated subdirectory to preserve your desktop pathing structure
         unzip -q "GreenLanternMod (5).zip" -d extracted_mod
         
-        # Locate the exact directory containing build.gradle inside the zip file dynamically
+        # Locate the nested directory dynamically
         TARGET_DIR=$(find extracted_mod -name "build.gradle" -exec dirname {} \;)
         echo "PROJECT_DIR=$TARGET_DIR" >> $GITHUB_ENV
         
-        echo "Copying the modified build.gradle to the project folder..."
-        cp build.gradle "$TARGET_DIR/"
+        echo "Overwriting subfolder build.gradle with our corrected GitHub setup..."
+        # This forcefully replaces the zip's broken template file with our working script
+        cp build.gradle "$TARGET_DIR/build.gradle"
         
-        echo "Project directory verified at: $TARGET_DIR"
-        ls -la "$TARGET_DIR"
+        echo "Injecting the official NeoForge development plugin directly into the project path..."
+        sed -i 's/id '\''java'\''/id '\''net.neoforged.moddev'\'' version '\''1.0.17'\''/' "$TARGET_DIR/build.gradle"
+        
+        echo "Injecting required neoForm configuration blocks directly into the project path..."
+        cat << 'EOF' >> "$TARGET_DIR/build.gradle"
+
+        neoForge {
+            version = "21.1.65"
+            parchment {
+                mappingsVersion = "2024.07.28"
+                minecraftVersion = "1.21"
+            }
+        }
+        EOF
+        
+        echo "Project workspace setup complete. Verifying path configuration:"
+        cat "$TARGET_DIR/build.gradle"
 
     - name: Ensure Gradle Wrapper Exists
       run: |
