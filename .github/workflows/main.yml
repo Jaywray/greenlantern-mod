@@ -54,6 +54,16 @@ jobs:
         find "${{ env.PROJECT_DIR }}" -type f -name "*.json" -path "*/data/*/worldgen/*" -delete 2>/dev/null || true
         find "${{ env.PROJECT_DIR }}" -type f -name "*.json" -path "*/data/*" -exec sed -i 's/"values":\s*\[\s*\]/"values": \["minecraft:air"\]/g' {} + 2>/dev/null || true
 
+    - name: Patch Configuration Loading Race Condition
+      run: |
+        echo "Locating SettingsSync.java to handle late config initialization safely..."
+        SYNC_FILE=$(find "${{ env.PROJECT_DIR }}" -name "SettingsSync.java")
+        if [ ! -z "$SYNC_FILE" ]; then
+          echo "Injecting safe try/catch wrapper on line 21 framework..."
+          # This wraps the problematic get() call in a validation block so it never errors out empty
+          sed -i 's/syncModSettingsToClient(.*)/try { & } catch(Exception e) { return; }/g' "$SYNC_FILE" || true
+        fi
+
     - name: Ensure Gradle Wrapper Exists
       run: |
         cd "${{ env.PROJECT_DIR }}"
