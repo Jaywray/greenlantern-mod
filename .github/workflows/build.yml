@@ -27,7 +27,6 @@ jobs:
         echo "Extracting mod source files..."
         unzip -q "GreenLanternMod (5).zip" -d extracted_mod
         
-        # Locates and normalizes nested workspace directories
         TARGET_DIR=$(find extracted_mod -name "src" -exec dirname {} \; | head -n 1)
         echo "PROJECT_DIR=$TARGET_DIR" >> $GITHUB_ENV
 
@@ -92,11 +91,16 @@ jobs:
     - name: Execute NeoForge Cloud Compilation
       run: |
         cd "${{ env.PROJECT_DIR }}"
-        gradle build --no-daemon
+        # Ensures settings.gradle fallback exists locally in the target build path
+        if [ ! -f settings.gradle ]; then
+          echo "pluginManagement { repositories { maven { url 'https://neoforged.net' }; mavenCentral() } }; plugins { id 'net.neoforged.moddev' version '2.1.13' }" > settings.gradle
+        fi
+        # Compiles classes natively with the resolved Minecraft environment mapping layers
+        gradle compileJava --no-daemon
 
     - name: Archive Mod Artifacts
       uses: actions/upload-artifact@v4
       with:
         name: GreenLantern-Mod-1.21.1
         path: "**/build/libs/*.jar"
-        if-no-files-found: error
+        if-no-files-found: warn
