@@ -26,12 +26,16 @@ jobs:
         echo "Extracting mod source files into separate workspace directory..."
         unzip -q "GreenLanternMod (5).zip" -d extracted_mod
         
-        # Explicitly targets the parent source directory where your desktop code lives
+        echo "Locating the core project folder path..."
         TARGET_DIR=$(find extracted_mod -name "src" -exec dirname {} \; | head -n 1)
         echo "PROJECT_DIR=$TARGET_DIR" >> $GITHUB_ENV
         
-        echo "Overwriting subfolder environment blueprints with our corrected GitHub setup..."
-        # This forcefully copies BOTH working gradle configs directly into your code root folder path seamlessly
+        echo "Purging all hidden, conflicting configuration templates from the archive..."
+        # This forcefully deletes any hidden settings or build gradle files brought over from your desktop zip
+        find extracted_mod -name "settings.gradle" -delete 2>/dev/null || true
+        find extracted_mod -name "build.gradle" -delete 2>/dev/null || true
+        
+        echo "Deploying our clean, updated configuration files directly next to your source code..."
         cp build.gradle "$TARGET_DIR/build.gradle"
         cp settings.gradle "$TARGET_DIR/settings.gradle"
         
@@ -41,7 +45,6 @@ jobs:
     - name: Ensure Gradle Wrapper Exists
       run: |
         cd "${{ env.PROJECT_DIR }}"
-        # Forcing wrapper generation specifically inside the deep target folder
         gradle wrapper --gradle-version 8.8
         chmod +x ./gradlew
 
