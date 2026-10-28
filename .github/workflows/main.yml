@@ -36,15 +36,23 @@ jobs:
         curl -sL "https://neoforged.net" -o "D:/curseforge/minecraft/Install/libraries/net/minecraft/client/1.21.1-20240808.144430/client-1.21.1-20240808.144430-srg.jar"
         
         echo "Injecting full core Minecraft and NeoForge base imports into every java file..."
-        # This scans all Java files and appends the standard game framework imports automatically
-        find "$TARGET_DIR" -type f -name "*.java" -exec sed -i '/package com.example/a \
-        import net.minecraft.world.entity.player.Player;\
-        import net.minecraft.server.level.ServerPlayer;\
-        import net.minecraft.world.entity.Entity;\
-        import net.minecraft.world.entity.EntityType;\
-        import net.minecraft.world.entity.projectile.Projectile;\
-        import net.neoforged.neoforge.registries.DeferredHolder;\
-        import net.neoforged.bus.api.IEventBus;' {} \;
+        # Using awk ensures perfectly clean, formatting-safe line insertions across all your code files
+        find "$TARGET_DIR" -type f -name "*.java" | while read -r java_file; do
+            awk '
+            /^package com\.example/ {
+                print $0
+                print "import net.minecraft.world.entity.player.Player;"
+                print "import net.minecraft.server.level.ServerPlayer;"
+                print "import net.minecraft.world.entity.Entity;"
+                print "import net.minecraft.world.entity.EntityType;"
+                print "import net.minecraft.world.entity.projectile.Projectile;"
+                print "import net.neoforged.neoforge.registries.DeferredHolder;"
+                print "import net.neoforged.bus.api.IEventBus;"
+                next
+            }
+            { print }
+            ' "$java_file" > "${java_file}.tmp" && mv "${java_file}.tmp" "$java_file"
+        done
         
         echo "Project workspace extraction and import patching complete."
 
