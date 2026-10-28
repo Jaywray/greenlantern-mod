@@ -23,51 +23,33 @@ jobs:
 
     - name: Extract Desktop Code Files
       run: |
-        echo "Extracting mod source files..."
-        unzip -q "GreenLanternMod (5).zip" -d temp_extraction
+        echo "Extracting mod source files into separate workspace directory..."
+        # Extract files into a dedicated subdirectory to preserve your desktop pathing structure
+        unzip -q "GreenLanternMod (5).zip" -d extracted_mod
         
-        echo "Moving files out of the nested archive folder to root level..."
-        mv temp_extraction/*/.??* temp_extraction/*/* . 2>/dev/null || true
-        rm -rf temp_extraction
-
-    - name: Purge Hardcoded Local Dependencies
-      run: |
-        echo "Locating and wiping any hardcoded local path declarations..."
-        sed -i '/curseforge/d' build.gradle 2>/dev/null || true
-        sed -i '/D:/d' build.gradle 2>/dev/null || true
-
-    - name: Inject NeoForge Automated Toolchain
-      run: |
-        echo "Injecting the official NeoForge development plugin..."
-        sed -i 's/id '\''java'\''/id '\''net.neoforged.moddev'\'' version '\''1.0.17'\''/' build.gradle
+        # Locate the exact directory containing build.gradle inside the zip file dynamically
+        TARGET_DIR=$(find extracted_mod -name "build.gradle" -exec dirname {} \;)
+        echo "PROJECT_DIR=$TARGET_DIR" >> $GITHUB_ENV
         
-        echo "Injecting required neoForm configuration blocks..."
-        # This appends the exact 1.21.1 environment layout expected by ModDevGradle
-        cat << 'EOF' >> build.gradle
-
-        neoForge {
-            version = "21.1.65"
-            parchment {
-                mappingsVersion = "2024.07.28"
-                minecraftVersion = "1.21"
-            }
-        }
-        EOF
+        echo "Copying the modified build.gradle to the project folder..."
+        cp build.gradle "$TARGET_DIR/"
         
-        echo "=== Verifying Your Cleaned Build Architecture ==="
-        cat build.gradle
-        echo "================================================="
+        echo "Project directory verified at: $TARGET_DIR"
+        ls -la "$TARGET_DIR"
 
     - name: Ensure Gradle Wrapper Exists
       run: |
+        cd "${{ env.PROJECT_DIR }}"
         if [ ! -f ./gradlew ]; then
-          echo "Gradle wrapper missing or outdated. Generating Gradle 8.8..."
+          echo "Generating Gradle 8.8 Wrapper inside the project folder..."
           gradle wrapper --gradle-version 8.8
         fi
         chmod +x ./gradlew
 
     - name: Execute NeoForge Cloud Compilation
-      run: ./gradlew build --no-daemon
+      run: |
+        cd "${{ env.PROJECT_DIR }}"
+        ./gradlew build --no-daemon
 
     - name: Archive Mod Artifacts
       uses: actions/upload-artifact@v4
