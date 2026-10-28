@@ -39,7 +39,6 @@ jobs:
         cat << 'EOF' >> "$TARGET_DIR/build.gradle"
 
         neoForge {
-            # UPGRADED TO MATCH YOUR EXACT CLIENT RUNTIME VERSION PERFECTLY
             version = "21.1.265"
             parchment {
                 mappingsVersion = "2024.07.28"
