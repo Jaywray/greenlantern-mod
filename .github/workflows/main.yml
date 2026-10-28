@@ -1,100 +1,70 @@
-name: NeoForge Mod Compilation Track
+plugins {
+    id 'net.neoforged.moddev' version '1.0.17'
+    id 'java'
+    id 'eclipse'
+    id 'idea'
+    id 'maven-publish'
+}
 
-on:
-  push:
-    branches: [ "main", "master" ]
-  pull_request:
-    branches: [ "main", "master" ]
-  workflow_dispatch:
+version = '1.0.0'
+group = 'com.example.greenlantern'
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+base {
+    archivesName = 'greenlantern'
+}
 
-    steps:
-    - name: Checkout Repository Code
-      uses: actions/checkout@v4
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
 
-    - name: Set up JDK 21
-      uses: actions/setup-java@v4
-      with:
-        java-version: '21'
-        distribution: 'temurin'
+// Configures the official NeoForge development environment parameters natively
+neoForge {
+    version = "21.1.265"
+    parchment {
+        mappingsVersion = "2024.07.28"
+        minecraftVersion = "1.21"
+      }
+}
 
-    - name: Extract and Configure Desktop Code Workspace
-      run: |
-        echo "Extracting mod source files into separate workspace directory..."
-        unzip -q "GreenLanternMod (5).zip" -d extracted_mod
-        
-        TARGET_DIR=$(find extracted_mod -name "build.gradle" -exec dirname {} \;)
-        echo "PROJECT_DIR=$TARGET_DIR" >> $GITHUB_ENV
-        
-        echo "Overwriting subfolder build.gradle with our corrected GitHub setup..."
-        cp build.gradle "$TARGET_DIR/build.gradle"
-        
-        echo "Injecting the official NeoForge development plugin directly into the project path..."
-        sed -i 's/id '\''java'\''/id '\''net.neoforged.moddev'\'' version '\''1.0.17'\''/' "$TARGET_DIR/build.gradle"
-        
-        echo "Injecting required neoForm configuration blocks directly into the project path..."
-        cat << 'EOF' >> "$TARGET_DIR/build.gradle"
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
 
-        neoForge {
-            version = "21.1.265"
-            parchment {
-                mappingsVersion = "2024.07.28"
-                minecraftVersion = "1.21"
-            }
-        }
-        EOF
+dependencies {
+    // Core engine hooks handled automatically by the moddev toolchain
+}
 
-    - name: Deep Clean Corrupted Data Mappings
-      run: |
-        echo "Scanning for broken dynamic tag files inside registries..."
-        find "${{ env.PROJECT_DIR }}" -type f -name "*.json" -path "*/data/*/damage_type/*" -delete 2>/dev/null || true
-        find "${{ env.PROJECT_DIR }}" -type f -name "*.json" -path "*/data/*/worldgen/*" -delete 2>/dev/null || true
-        find "${{ env.PROJECT_DIR }}" -type f -name "*.json" -path "*/data/*" -exec sed -i 's/"values":\s*\[\s*\]/"values": \["minecraft:air"\]/g' {} + 2>/dev/null || true
+jar {
+    from sourceSets.main.output
+    from sourceSets.main.allSource
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
 
-    - name: Protect Configuration Initialization Race Condition
-      run: |
-        echo "Locating target config sync files..."
-        TARGET_FILE=$(find "${{ env.PROJECT_DIR }}" -name "SettingsSync.java")
-        if [ ! -z "$TARGET_FILE" ]; then
-            echo "Neutralizing configuration sync lines to bypass early network race conditions safely..."
-            sed -i '/syncModSettingsToClient/,/^[[:space:]]*}/d' "$TARGET_FILE" || true
-            echo -e "\n    private static void syncModSettingsToClient(net.minecraft.server.level.ServerPlayer p) {}\n}" >> "$TARGET_FILE"
-        fi
+    manifest {
+        attributes([
+            "Specification-Title"     : "greenlantern",
+            "Specification-Vendor"    : "jaywray",
+            "Specification-Version"   : "1",
+            "Implementation-Title"    : "greenlantern",
+            "Implementation-Version"  : "1.0.0",
+            "Implementation-Vendor"   : "jaywray"
+        ])
+    }
+}
 
-    # FIX APPLIED: Injected a dummy register method to stop the "cannot find symbol" compile failure
-    - name: Sanitize Creative Tab Event Registrations
-      run: |
-        echo "Locating ModCreativeTabs.java to clear internal builder loops..."
-        TAB_FILE=$(find "${{ env.PROJECT_DIR }}" -name "ModCreativeTabs.java")
-        if [ ! -z "$TAB_FILE" ]; then
-            echo "Bypassing creative tab systems cleanly by neutralizing class bodies..."
-            echo "package com.example.greenlantern.registry;" > "$TAB_FILE"
-            echo "public class ModCreativeTabs { public static void register(Object bus) {} }" >> "$TAB_FILE"
-            
-            echo "=== Sanitized File Verification ==="
-            cat "$TAB_FILE"
-        fi
+tasks.withType(ProcessResources).configureEach {
+    var replaceProperties = [
+        'mod_version': version
+    ]
+    inputs.properties(replaceProperties)
 
-    - name: Ensure Gradle Wrapper Exists
-      run: |
-        cd "${{ env.PROJECT_DIR }}"
-        if [ ! -f ./gradlew ]; then
-          echo "Generating Gradle 8.8 Wrapper inside the project folder..."
-          gradle wrapper --gradle-version 8.8
-        fi
-        chmod +x ./gradlew
+    filesMatching("META-INF/neoforge.mods.toml") {
+        expand replaceProperties
+    }
+}
 
-    - name: Execute NeoForge Cloud Compilation
-      run: |
-        cd "${{ env.PROJECT_DIR }}"
-        ./gradlew build --no-daemon
-
-    - name: Archive Mod Artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: GreenLantern-Mod-1.21.1
-        path: "**/build/libs/*.jar"
-        if-no-files-found: error
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
