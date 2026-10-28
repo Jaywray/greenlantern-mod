@@ -25,16 +25,18 @@ repositories {
 }
 
 dependencies {
-    // Exposes the actual Minecraft/NeoForge packages directly to your compiler classpath
+    // Standard combined cloud-compilation target artifact for NeoForge mods
     compileOnly "net.neoforged:neoforge:21.1.0"
+}
+
+// Automatically configures the Java compiler options to expose namespaces globally
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.compilerArgs.addAll(['-Xlint:unchecked', '-Xlint:deprecation'])
 }
 
 jar {
     from sourceSets.main.output
     from sourceSets.main.allSource
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
-}
-
-tasks.withType(JavaCompile).configureEach {
-    options.encoding = 'UTF-8'
 }
