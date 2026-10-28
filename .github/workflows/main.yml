@@ -36,10 +36,10 @@ jobs:
         curl -sL "https://neoforged.net" -o "D:/curseforge/minecraft/Install/libraries/net/minecraft/client/1.21.1-20240808.144430/client-1.21.1-20240808.144430-srg.jar"
         
         echo "Injecting full core Minecraft and NeoForge base imports into every java file..."
-        # Using awk ensures perfectly clean, formatting-safe line insertions across all your code files
+        # Updated to scan for your real package name: com.greenlantern
         find "$TARGET_DIR" -type f -name "*.java" | while read -r java_file; do
             awk '
-            /^package com\.example/ {
+            /^package com\.greenlantern/ {
                 print $0
                 print "import net.minecraft.world.entity.player.Player;"
                 print "import net.minecraft.server.level.ServerPlayer;"
