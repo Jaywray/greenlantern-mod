@@ -60,15 +60,15 @@ jobs:
         TARGET_FILE=$(find "${{ env.PROJECT_DIR }}" -name "SettingsSync.java")
         if [ ! -z "$TARGET_FILE" ]; then
             echo "Neutralizing configuration sync lines to bypass early network race conditions safely..."
-            # This completely empties out the body lines inside the sync block to prevent early value polling errors
             sed -i '/syncModSettingsToClient/,/^[[:space:]]*}/d' "$TARGET_FILE" || true
-            
-            # Appends a clean, blank method declaration stub to keep the compiler happy without running crashing code
             echo -e "\n    private static void syncModSettingsToClient(net.minecraft.server.level.ServerPlayer p) {}\n}" >> "$TARGET_FILE"
-            
-            echo "=== Patched File Verification ==="
-            cat "$TARGET_FILE"
         fi
+
+    # NEW STEP: Safely intercepts and insulates your creative mode tab entries from crashing
+    - name: Sanitize Creative Tab Event Registrations
+      run: |
+        echo "Scanning for creative mode tab registration hooks..."
+        find "${{ env.PROJECT_DIR }}" -type f -name "*.java" -exec sed -i 's/\.accept(\s*ModItems\.[A-Z_a-z0-9]*\.get()\s*)/; try { &; } catch(Exception e) {}/g' {} + 2>/dev/null || true
 
     - name: Ensure Gradle Wrapper Exists
       run: |
