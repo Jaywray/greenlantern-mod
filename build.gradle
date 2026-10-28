@@ -27,13 +27,29 @@ dependencies {
     // Basic structural compilation bridges bypassing complex plugin locks
 }
 
+// FORCE GRADLE TO PACK YOUR CODE AND ASSETS INTO THE JAR
+jar {
+    from sourceSets.main.output
+    from sourceSets.main.allSource
+    
+    manifest {
+        attributes([
+            "Specification-Title"     : "greenlantern",
+            "Specification-Vendor"    : "jaywray",
+            "Specification-Version"   : "1",
+            "Implementation-Title"    : "greenlantern",
+            "Implementation-Version"  : "1.0.0",
+            "Implementation-Vendor"   : "jaywray"
+        ])
+    }
+}
+
 tasks.withType(ProcessResources).configureEach {
     var replaceProperties = [
         'mod_version': version
     ]
     inputs.properties(replaceProperties)
 
-    // Safely expands properties only in the metadata file without corrupting item/block models
     filesMatching("META-INF/neoforge.mods.toml") {
         expand replaceProperties
     }
