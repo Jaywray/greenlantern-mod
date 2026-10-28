@@ -3,6 +3,7 @@ plugins {
     id 'eclipse'
     id 'idea'
     id 'maven-publish'
+    id 'net.neoforged.moddev'
 }
 
 version = '1.0.0'
@@ -12,22 +13,15 @@ base {
     archivesName = 'greenlantern'
 }
 
+// Configures the formal plugin to extract real Minecraft/NeoForge source classes
+neoForm {
+    version = "1.21.1-20240808.144430"
+}
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
     }
-}
-
-repositories {
-    mavenLocal()
-    mavenCentral()
-    // Explicitly targets the official NeoForge production and development builds
-    maven { name = "NeoForge"; url = "https://neoforged.net" }
-}
-
-dependencies {
-    // Standard modular dev artifact which exposes the complete Minecraft mapping classes to the Java compiler
-    compileOnly "net.neoforged:neoforge:21.1.0:userdev"
 }
 
 jar {
