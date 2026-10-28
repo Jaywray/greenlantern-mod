@@ -1,62 +1,11 @@
-plugins {
-    id 'java'
-    id 'eclipse'
-    id 'idea'
-    id 'maven-publish'
-}
-
-version = '1.0.0'
-group = 'com.example.greenlantern'
-
-base {
-    archivesName = 'greenlantern'
-}
-
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
-    }
-}
-
 repositories {
     mavenLocal()
     mavenCentral()
+    // Official NeoForge Maven repository
+    maven { name = "NeoForge"; url = "https://neoforged.net" }
 }
 
 dependencies {
-    // Basic structural compilation bridges bypassing complex plugin locks
-}
-
-jar {
-    from sourceSets.main.output
-    from sourceSets.main.allSource
-    
-    // FIXES THE PACKAGING CLASH: Tells Gradle to include duplicates seamlessly
-    duplicatesStrategy = DuplicatesStrategy.INCLUDE
-
-    manifest {
-        attributes([
-            "Specification-Title"     : "greenlantern",
-            "Specification-Vendor"    : "jaywray",
-            "Specification-Version"   : "1",
-            "Implementation-Title"    : "greenlantern",
-            "Implementation-Version"  : "1.0.0",
-            "Implementation-Vendor"   : "jaywray"
-        ])
-    }
-}
-
-tasks.withType(ProcessResources).configureEach {
-    var replaceProperties = [
-        'mod_version': version
-    ]
-    inputs.properties(replaceProperties)
-
-    filesMatching("META-INF/neoforge.mods.toml") {
-        expand replaceProperties
-    }
-}
-
-tasks.withType(JavaCompile).configureEach {
-    options.encoding = 'UTF-8'
+    // Standard NeoForge 1.21.1 compilation target dependency
+    implementation "net.neoforged:neoforge:21.1.0" 
 }
