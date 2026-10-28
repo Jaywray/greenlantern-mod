@@ -1,106 +1,39 @@
-name: NeoForge Mod Compilation Track
+plugins {
+    id 'java'
+    id 'eclipse'
+    id 'idea'
+    id 'maven-publish'
+    id 'net.neoforged.moddev' version '2.1.13'
+}
 
-on:
-  push:
-    branches: [ "main", "master" ]
-  pull_request:
-    branches: [ "main", "master" ]
-  workflow_dispatch:
+version = '1.0.0'
+group = 'com.example.greenlantern'
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+base {
+    archivesName = 'greenlantern'
+}
 
-    steps:
-    - name: Checkout Repository Code
-      uses: actions/checkout@v4
+neoForm {
+    version = "1.21.1-20240808.144430"
+}
 
-    - name: Set up JDK 21
-      uses: actions/setup-java@v4
-      with:
-        java-version: '21'
-        distribution: 'temurin'
-        cache: 'gradle'
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
 
-    - name: Extract Project Workspace
-      run: |
-        echo "Extracting mod source files..."
-        unzip -q "GreenLanternMod (5).zip" -d extracted_mod
-        
-        TARGET_DIR=$(find extracted_mod -name "src" -exec dirname {} \; | head -n 1)
-        echo "PROJECT_DIR=$TARGET_DIR" >> $GITHUB_ENV
+dependencies {
+    // This tells the ModDev plugin to actively load NeoForge/Minecraft classes directly into the compile classpath
+    implementation "net.neoforged:neoforge:21.1.0"
+}
 
-    - name: Global Namespace Mapping Injection via Python
-      shell: python
-      run: |
-        import os
-        
-        imports_to_add = [
-            "import net.minecraft.world.entity.player.Player;",
-            "import net.minecraft.server.level.ServerPlayer;",
-            "import net.minecraft.world.entity.Entity;",
-            "import net.minecraft.world.entity.LivingEntity;",
-            "import net.minecraft.world.entity.EntityType;",
-            "import net.minecraft.world.entity.projectile.Projectile;",
-            "import net.minecraft.world.entity.pathfinder.PathfinderMob;",
-            "import net.minecraft.world.item.ItemStack;",
-            "import net.minecraft.tags.TagKey;",
-            "import net.minecraft.resources.ResourceLocation;",
-            "import net.minecraft.core.registries.Registries;",
-            "import net.neoforged.neoforge.registries.DeferredHolder;",
-            "import net.neoforged.fml.common.Mod;",
-            "import net.neoforged.fml.common.EventBusSubscriber;",
-            "import net.neoforged.api.distmarker.Dist;",
-            "import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;",
-            "import net.neoforged.neoforge.event.entity.EntityTeleportEvent;",
-            "import net.neoforged.neoforge.event.server.ServerStoppingEvent;",
-            "import net.neoforged.neoforge.event.server.ServerStoppedEvent;",
-            "import net.neoforged.bus.api.IEventBus;"
-        ]
-        
-        project_dir = os.environ['PROJECT_DIR']
-        print(f"Scanning files in: {project_dir}")
-        
-        for root, dirs, files in os.walk(project_dir):
-            for file in files:
-                if file.endswith(".java"):
-                    file_path = os.path.join(root, file)
-                    
-                    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                        content = f.read()
-                    
-                    lines = content.splitlines()
-                    cleaned_lines = [line.strip('\r\n') for line in lines]
-                    
-                    new_lines = []
-                    inserted = False
-                    
-                    for line in cleaned_lines:
-                        new_lines.append(line)
-                        if line.strip().startswith("package ") and not inserted:
-                            new_lines.append("")
-                            for imp in imports_to_add:
-                                new_lines.append(imp)
-                            inserted = True
-                    
-                    with open(file_path, 'w', encoding='utf-8') as f:
-                        f.write("\n".join(new_lines) + "\n")
-                        
-        print("Global Python import mapping successful.")
+jar {
+    from sourceSets.main.output
+    from sourceSets.main.allSource
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
 
-    - name: Execute NeoForge Cloud Compilation
-      run: |
-        cd "${{ env.PROJECT_DIR }}"
-        # Ensures settings.gradle fallback exists locally in the target build path
-        if [ ! -f settings.gradle ]; then
-          echo "pluginManagement { repositories { maven { url 'https://neoforged.net' }; mavenCentral() } }; plugins { id 'net.neoforged.moddev' version '2.1.13' }" > settings.gradle
-        fi
-        # Compiles classes natively with the resolved Minecraft environment mapping layers
-        gradle compileJava --no-daemon
-
-    - name: Archive Mod Artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: GreenLantern-Mod-1.21.1
-        path: "**/build/libs/*.jar"
-        if-no-files-found: warn
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
