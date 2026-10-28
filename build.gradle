@@ -3,6 +3,8 @@ plugins {
     id 'eclipse'
     id 'idea'
     id 'maven-publish'
+    // The official plugin that natively resolves and downloads all Minecraft/NeoForge packages
+    id 'net.neoforged.moddev' version '2.1.13'
 }
 
 version = '1.0.0'
@@ -12,21 +14,20 @@ base {
     archivesName = 'greenlantern'
 }
 
+// Tells the plugin which game version and platform setup to automatically construct
+neoForm {
+    version = "1.21.1-20240808.144430"
+}
+
+// Automatically links the official NeoForge development packages to your source code
+neoForge {
+    version = "21.1.0"
+}
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
     }
-}
-
-repositories {
-    mavenLocal()
-    mavenCentral()
-    maven { name = "NeoForge"; url = "https://maven.neoforged.net/releases/" }
-}
-
-dependencies {
-    // Fetches the complete unpacked class hierarchy structures for development
-    compileOnly "net.neoforged:neoforge:21.1.0:universal"
 }
 
 jar {
