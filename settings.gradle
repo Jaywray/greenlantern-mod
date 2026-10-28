@@ -1,1 +1,13 @@
+pluginManagement {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven { name = "NeoForge"; url = "https://neoforged.net" }
+    }
+}
+
+plugins {
+    id 'net.neoforged.moddev' version '2.1.13'
+}
+
 rootProject.name = 'greenlantern'
