@@ -35,19 +35,18 @@ jobs:
         echo "Downloading the official mapped Minecraft development jar from the secure servers..."
         curl -sL "https://neoforged.net" -o "D:/curseforge/minecraft/Install/libraries/net/minecraft/client/1.21.1-20240808.144430/client-1.21.1-20240808.144430-srg.jar"
         
-        echo "Injecting full core Minecraft and NeoForge base imports into every java file cleanly..."
-        # Replacing the multi-line text block with safe individual echo statements to satisfy YAML parser rules natively
+        echo "Injecting full core Minecraft and NeoForge base imports safely UNDER the package line..."
+        # This scans all Java files and places the imports right after the mandatory package statement
         find "$TARGET_DIR" -type f -name "*.java" | while read -r java_file; do
-            echo "import net.minecraft.world.entity.player.Player;" > patch_header.txt
-            echo "import net.minecraft.server.level.ServerPlayer;" >> patch_header.txt
-            echo "import net.minecraft.world.entity.Entity;" >> patch_header.txt
-            echo "import net.minecraft.world.entity.EntityType;" >> patch_header.txt
-            echo "import net.minecraft.world.entity.projectile.Projectile;" >> patch_header.txt
-            echo "import net.minecraft.world.entity.PathfinderMob;" >> patch_header.txt
-            echo "import net.neoforged.neoforge.registries.DeferredHolder;" >> patch_header.txt
-            echo "import net.neoforged.bus.api.IEventBus;" >> patch_header.txt
-            cat "$java_file" >> patch_header.txt
-            mv patch_header.txt "$java_file"
+            sed -i '/^package /a \
+            import net.minecraft.world.entity.player.Player;\
+            import net.minecraft.server.level.ServerPlayer;\
+            import net.minecraft.world.entity.Entity;\
+            import net.minecraft.world.entity.EntityType;\
+            import net.minecraft.world.entity.projectile.Projectile;\
+            import net.minecraft.world.entity.PathfinderMob;\
+            import net.neoforged.neoforge.registries.DeferredHolder;\
+            import net.neoforged.bus.api.IEventBus;' "$java_file"
         done
         
         echo "Project workspace extraction and import patching complete."
