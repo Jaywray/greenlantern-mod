@@ -36,7 +36,6 @@ jobs:
         curl -sL "https://neoforged.net" -o "D:/curseforge/minecraft/Install/libraries/net/minecraft/client/1.21.1-20240808.144430/client-1.21.1-20240808.144430-srg.jar"
         
         echo "Injecting full core Minecraft and NeoForge base imports into every java file cleanly..."
-        # This writes a temporary text block and sticks it at the front of each file seamlessly
         find "$TARGET_DIR" -type f -name "*.java" | while read -r java_file; do
             cat << 'EOF' > patch_header.txt
 import net.minecraft.world.entity.player.Player;
