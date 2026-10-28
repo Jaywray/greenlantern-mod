@@ -26,11 +26,16 @@ jobs:
         echo "Extracting mod source files into separate workspace directory..."
         unzip -q "GreenLanternMod (5).zip" -d extracted_mod
         
-        TARGET_DIR=$(find extracted_mod -name "build.gradle" -exec dirname {} \;)
+        echo "Locating all nested build.gradle instances to overwrite..."
+        # This scans the extracted workspace layout and forcefully copies our clean NeoForge build script over every directory level
+        find extracted_mod -name "build.gradle" -exec cp build.gradle {} \;
+        
+        # Explicitly targets the parent source directory for compilation
+        TARGET_DIR=$(find extracted_mod -name "src" -exec dirname {} \; | head -n 1)
         echo "PROJECT_DIR=$TARGET_DIR" >> $GITHUB_ENV
         
-        echo "Copying our clean, updated build.gradle directly next to your source files..."
-        cp build.gradle "$TARGET_DIR/build.gradle"
+        echo "Verified compilation directory sitting at: $TARGET_DIR"
+        ls -la "$TARGET_DIR"
 
     - name: Ensure Gradle Wrapper Exists
       run: |
