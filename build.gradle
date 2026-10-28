@@ -27,11 +27,13 @@ dependencies {
     // Basic structural compilation bridges bypassing complex plugin locks
 }
 
-// FORCE GRADLE TO PACK YOUR CODE AND ASSETS INTO THE JAR
 jar {
     from sourceSets.main.output
     from sourceSets.main.allSource
     
+    // FIXES THE PACKAGING CLASH: Tells Gradle to include duplicates seamlessly
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+
     manifest {
         attributes([
             "Specification-Title"     : "greenlantern",
