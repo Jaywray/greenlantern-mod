@@ -30,6 +30,9 @@ jobs:
         BINARY_ROOT=$(find raw_extraction -name "META-INF" -exec dirname {} \; | head -n 1)
         echo "Target root discovered at: $BINARY_ROOT"
         
+        echo "Removing incompatible legacy shader elements to prevent render thread crashes..."
+        rm -rf "$BINARY_ROOT/assets/greenlantern/shaders"
+        
         echo "Creating clear absolute output directory structures..."
         mkdir -p "$GITHUB_WORKSPACE/output_jar/build/libs"
         
