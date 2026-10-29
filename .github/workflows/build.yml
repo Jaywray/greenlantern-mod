@@ -27,16 +27,15 @@ jobs:
         unzip -q "GreenLanternMod (5).zip" -d raw_extraction
         
         echo "Locating the true assets and binary root..."
-        # Finds the exact folder containing the META-INF metadata structure
         BINARY_ROOT=$(find raw_extraction -name "META-INF" -exec dirname {} \; | head -n 1)
         echo "Target root discovered at: $BINARY_ROOT"
         
-        echo "Normalizing and building isolated output container..."
-        mkdir -p output_jar/build/libs
+        echo "Creating clear absolute output directory structures..."
+        mkdir -p "$GITHUB_WORKSPACE/output_jar/build/libs"
         
-        # Moves into the actual data directory so files pack straight into the root
+        echo "Moving into target binary root and compressing flat package..."
         cd "$BINARY_ROOT"
-        zip -r "../../../output_jar/build/libs/greenlantern-1.0.0.jar" ./*
+        zip -r "$GITHUB_WORKSPACE/output_jar/build/libs/greenlantern-1.0.0.jar" ./*
         
         echo "Verification complete."
 
